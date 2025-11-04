@@ -1,0 +1,13 @@
+services:
+  stingray.services.orderservice:
+    image: ${DOCKER_REGISTRY-}stingrayservicesorderservice
+    build:
+      context: .
+      dockerfile: Stingray.Services.OrderService/Dockerfile
+
+  stingray.services.userservice:
+    image: ${DOCKER_REGISTRY-}stingrayservicesuserservice
+    build:
+      context: .
+      dockerfile: Stingray.Services.UserService/Dockerfile
+
