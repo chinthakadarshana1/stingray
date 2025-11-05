@@ -1,0 +1,56 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  stingray.services.orderservice:
+    build:
+      context: "C:\\cHiNProjects\\temp\\stingray\\src"
+      dockerfile: "Stingray.Services.OrderService/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/Stingray.Services.OrderService.dll"
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "stingrayservicesorderservice:dev"
+    ports: []
+    volumes:
+    - "C:\\cHiNProjects\\temp\\stingray\\src\\Stingray.Services.OrderService:/app:rw"
+    - "C:\\cHiNProjects\\temp\\stingray\\src:/src:rw"
+    - "C:\\Users\\ChinthakaFernando\\.nuget\\packages:/home/app/.nuget/packages"
+    working_dir: "/app"
+  stingray.services.outboxprocessor:
+    build:
+      context: "C:\\cHiNProjects\\temp\\stingray\\src"
+      dockerfile: "Stingray.Services.OutboxProcessor/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/Stingray.Services.OutboxProcessor.dll"
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "stingrayservicesoutboxprocessor:dev"
+    ports: []
+    volumes:
+    - "C:\\cHiNProjects\\temp\\stingray\\src\\Stingray.Services.OutboxProcessor:/app:rw"
+    - "C:\\cHiNProjects\\temp\\stingray\\src:/src:rw"
+    - "C:\\Users\\ChinthakaFernando\\.nuget\\packages:/home/app/.nuget/packages"
+    working_dir: "/app"
+  stingray.services.userservice:
+    build:
+      context: "C:\\cHiNProjects\\temp\\stingray\\src"
+      dockerfile: "Stingray.Services.UserService/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/Stingray.Services.UserService.dll"
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "stingrayservicesuserservice:dev"
+    ports: []
+    volumes:
+    - "C:\\cHiNProjects\\temp\\stingray\\src\\Stingray.Services.UserService:/app:rw"
+    - "C:\\cHiNProjects\\temp\\stingray\\src:/src:rw"
+    - "C:\\Users\\ChinthakaFernando\\.nuget\\packages:/home/app/.nuget/packages"
+    working_dir: "/app"
