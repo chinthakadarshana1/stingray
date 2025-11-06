@@ -1,5 +1,6 @@
 ﻿# Stingray Architecture - With Standalone OutboxProcessor
 
+
 ## System Overview
 
 ```
@@ -18,6 +19,8 @@
 │  - GET /users/{id}       │    │  - GET /orders/{id}      │
 │  - Port: 5001            │    │  - Port: 5002            │
 │  - Swagger UI            │    │  - Swagger UI            │
+│  - Kafka Messaging ⭐    │    │  - Polly Resilience ⭐   │
+│                          │    │  - MediatR Consumers ⭐  │
 └────────────┬─────────────┘    └────────────┬─────────────┘
              │                                │
              │ Writes to Outbox               │ Writes to Outbox
@@ -83,19 +86,26 @@ Docker Host
 │
 ├─ Container: kafka
 │  ├─ Port: 9092 (internal)
-│  └─ Port: 29092 (external)
+│  ├─ Port: 29092 (external)
+│  └─ Health Check: kafka-broker-api-versions ⭐
+│     └─ Interval: 10s, Start Period: 40s
 │
 ├─ Container: user_service
 │  ├─ Port: 5001 → 8080
 │  ├─ Environment:
 │  │  └─ Kafka__BootstrapServers=kafka:9092
-│  └─ Depends on: kafka
+│  ├─ Depends on: kafka (service_healthy) ⭐
+│  ├─ Restart: on-failure ⭐
+│  └─ Uses: Stingray.Infrastructure.KafkaMessaging ⭐
 │
 ├─ Container: order_service
 │  ├─ Port: 5002 → 8080
 │  ├─ Environment:
 │  │  └─ Kafka__BootstrapServers=kafka:9092
-│  └─ Depends on: kafka
+│  ├─ Depends on: kafka (service_healthy) ⭐
+│  ├─ Restart: on-failure ⭐
+│  ├─ Uses: Stingray.Infrastructure.KafkaMessaging ⭐
+│  └─ Polly Resilience Pipeline ⭐
 │
 └─ Container: outbox_processor ⭐ NEW
    ├─ No exposed ports (background worker)
@@ -248,6 +258,155 @@ docker-compose up -d --scale outbox-processor=3
 
 ---
 
+## Infrastructure Layer ⭐
+
+### Kafka Messaging Abstraction
+
+The system uses a dedicated infrastructure project for message broker abstraction:
+
+```
+Application Layer
+├─ IEventPublisher (with Outbox pattern)
+├─ IMessagePublisher (direct publishing)
+└─ Business logic (NO Kafka dependencies)
+        │
+        ▼
+Infrastructure Layer
+├─ Stingray.Infrastructure.KafkaMessaging ⭐
+│  ├─ KafkaEventPublisher (implements IEventPublisher)
+│  ├─ KafkaMessagePublisher (implements IMessagePublisher)
+│  └─ ServiceCollectionExtensions
+│
+└─ Easy to swap for:
+   ├─ RabbitMQ
+   ├─ Azure Service Bus
+   ├─ AWS SQS
+   └─ Any message broker
+```
+
+**Benefits:**
+- ✅ **Single Source of Truth** - One Kafka implementation for all services
+- ✅ **Easy to Test** - Mock interfaces instead of Kafka
+- ✅ **Broker Agnostic** - Application code doesn't know about Kafka
+- ✅ **One-Line Registration** - `builder.Services.AddKafkaMessaging()`
+- ✅ **Swappable** - Change `AddKafkaMessaging()` to `AddRabbitMqMessaging()`
+
+**Usage:**
+```csharp
+// In Program.cs
+builder.Services.AddKafkaMessaging(builder.Configuration);
+
+// To switch to RabbitMQ in the future:
+// builder.Services.AddRabbitMqMessaging(builder.Configuration);
+// Application code stays the same!
+```
+
+---
+
+## Resilience with Polly ⭐
+
+### Automatic Retry Strategy
+
+OrderService uses **Polly** (v8.x) for resilience and fault tolerance:
+
+```csharp
+builder.Services.AddSingleton<ResiliencePipeline>(sp =>
+{
+    return new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = Handle<ConsumeException>(ex =>
+                ex.Error.Code == ErrorCode.UnknownTopicOrPart ||
+                ex.Error.Code == ErrorCode.Local_AllBrokersDown ||
+                ex.Error.Code == ErrorCode.BrokerNotAvailable),
+            MaxRetryAttempts = int.MaxValue,
+            Delay = TimeSpan.FromSeconds(2),
+            BackoffType = DelayBackoffType.Exponential,
+            MaxDelay = TimeSpan.FromSeconds(30)
+        })
+        .Build();
+});
+```
+
+**Retry Behavior:**
+
+| Attempt | Delay | Action |
+|---------|-------|--------|
+| 1 | 2s | Retry after 2 seconds |
+| 2 | 4s | Exponential backoff |
+| 3 | 8s | Exponential backoff |
+| 4 | 16s | Exponential backoff |
+| 5+ | 30s | Capped at max delay |
+
+**Handled Errors:**
+- **UnknownTopicOrPart** - Topic doesn't exist yet (normal on startup)
+- **Local_AllBrokersDown** - Kafka brokers unavailable
+- **BrokerNotAvailable** - Specific broker down
+
+**Benefits:**
+- ✅ Automatic recovery from transient failures
+- ✅ Exponential backoff reduces load during failures
+- ✅ Structured logging of retry attempts
+- ✅ Services automatically reconnect when Kafka comes back online
+- ✅ No manual retry logic needed
+
+---
+
+## MediatR Event Processing ⭐
+
+### Clean Separation of Concerns
+
+Event consumers use MediatR to separate infrastructure from business logic:
+
+```
+Infrastructure Layer (OrderService)
+│
+UserCreatedEventConsumer (BackgroundService)
+├─ Kafka connection & subscription
+├─ Message deserialization
+├─ Creates service scope (for scoped dependencies)
+└─ Publishes to MediatR ───────┐
+                               │
+                               ▼
+Application Layer (Stingray.Application)
+│
+UserCreatedConsumer (INotificationHandler<UserCreatedNotification>)
+├─ Pure business logic
+├─ NO Kafka dependencies
+├─ NO BackgroundService
+├─ NO IConfiguration
+└─ Processes event (cache user, update read models, etc.)
+```
+
+**Benefits:**
+- ✅ **Clean Separation** - Infrastructure vs Business Logic
+- ✅ **Easy to Test** - Test handlers without Kafka
+- ✅ **Reusable** - Multiple handlers for same event
+- ✅ **SOLID Principles** - Each handler has single responsibility
+
+**Example:**
+```csharp
+// Infrastructure consumes from Kafka
+var userEvent = JsonSerializer.Deserialize<UserCreatedEvent>(message);
+
+// Delegate to MediatR
+using var scope = _serviceProvider.CreateScope();
+var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+await mediator.Publish(new UserCreatedNotification { UserId = userEvent.UserId });
+
+// Application layer handles business logic
+public class UserCreatedConsumer : INotificationHandler<UserCreatedNotification>
+{
+    public Task Handle(UserCreatedNotification notification, CancellationToken ct)
+    {
+        // Pure business logic here
+        // No Kafka knowledge needed!
+    }
+}
+```
+
+---
+
 ## Component Responsibilities
 
 ### UserService
@@ -264,7 +423,10 @@ docker-compose up -d --scale outbox-processor=3
 - ✅ Validate input
 - ✅ Save entities to database
 - ✅ Save events to outbox table
-- ✅ Consume events from Kafka
+- ✅ Consume events from Kafka (with Polly resilience) ⭐
+- ✅ Process events via MediatR handlers ⭐
+- ✅ Automatic retry with exponential backoff ⭐
+- ✅ Scoped service resolution for handlers ⭐
 - ❌ Does NOT publish to Kafka directly
 
 ### OutboxProcessor ⭐
@@ -289,6 +451,9 @@ docker-compose up -d --scale outbox-processor=3
 | **Debugging**       | Complex           | Simpler              | ✅ |
 | **Fault Isolation** | Coupled           | Isolated             | ✅ |
 | **Updates**         | Update entire API | Update independently | ✅ |
+| **Resilience** ⭐    | Manual retries    | Polly with backoff   | ✅ |
+| **Abstraction** ⭐   | Kafka coupled     | Broker agnostic      | ✅ |
+| **Event Handling** ⭐ | Mixed concerns    | MediatR separation   | ✅ |
 
 ---
 
@@ -327,9 +492,21 @@ docker-compose up -d --scale outbox-processor=3
 
 - **.NET 8** - Runtime
 - **ASP.NET Core Minimal APIs** - Web framework
-- **MediatR** - CQRS implementation
+- **MediatR** - CQRS implementation & event handling ⭐
 - **FluentValidation** - Input validation
+- **Polly** ⭐ - Resilience and transient-fault-handling
 - **Swagger** - API documentation
+
+### Infrastructure Projects ⭐
+
+- **Stingray.Infrastructure.KafkaMessaging** ⭐
+  - Kafka-specific implementations
+  - Message broker abstraction
+  - Easy to swap for RabbitMQ, Azure Service Bus, etc.
+- **Stingray.Storage.InMemory**
+  - EF Core DbContext
+  - Repository implementations
+  - In-Memory database for development
 
 ### OutboxProcessor ⭐
 
@@ -340,7 +517,7 @@ docker-compose up -d --scale outbox-processor=3
 
 ### Infrastructure
 
-- **Docker** - Containerization
+- **Docker** - Containerization with health checks ⭐
 - **Docker Compose** - Orchestration
 - **Apache Kafka** - Message broker
 - **Apache Zookeeper** - Kafka coordination
@@ -349,31 +526,79 @@ docker-compose up -d --scale outbox-processor=3
 
 ## Summary
 
-The **OutboxProcessor** is now a **first-class, standalone service** that:
+The **Stingray architecture** is now **production-ready** with:
 
-✅ Runs independently in its own container
-✅ Can be deployed to separate infrastructure
-✅ Scales independently from API services
-✅ Has dedicated resources
-✅ Provides clear separation of concerns
-✅ Is production-ready with proper configuration
+### Core Services
+1. **UserService** - User management API with Kafka messaging abstraction ⭐
+2. **OrderService** - Order management API with Polly resilience & MediatR ⭐
+3. **OutboxProcessor** - Standalone event publishing worker
 
-**Three independent services working together:**
+### Key Improvements ⭐
 
-1. **UserService** - User management API
-2. **OrderService** - Order management API
-3. **OutboxProcessor** - Event publishing worker ⭐
+**Resilience with Polly:**
+- ✅ Automatic retry with exponential backoff (2s → 4s → 8s → 16s → 30s)
+- ✅ Handles transient failures (broker down, topic not available)
+- ✅ Infinite retries with structured logging
+- ✅ Configurable via Dependency Injection
 
-All communicating via:
+**Kafka Infrastructure Abstraction:**
+- ✅ Dedicated `Stingray.Infrastructure.KafkaMessaging` project
+- ✅ Implements `IEventPublisher` and `IMessagePublisher` interfaces
+- ✅ Easy to swap Kafka for RabbitMQ, Azure Service Bus, etc.
+- ✅ One-line registration: `AddKafkaMessaging()`
+- ✅ Application code is broker-agnostic
 
-- **Database** - For outbox pattern
-- **Kafka** - For event streaming
+**MediatR Event Processing:**
+- ✅ Clean separation: Infrastructure consumes, Application processes
+- ✅ Event handlers have NO Kafka dependencies
+- ✅ Easy to test without message broker
+- ✅ Multiple handlers for same event
+- ✅ Scoped service resolution in background services
 
-**Status**: ✅ **PRODUCTION READY**
+**Docker Health Checks:**
+- ✅ Services wait for Kafka to be healthy before starting
+- ✅ Automatic restart on failure
+- ✅ No connection errors on startup
+
+### Communication Patterns
+
+**Database:**
+- For outbox pattern (guaranteed delivery)
+- Transactional consistency
+
+**Kafka:**
+- For event streaming (async communication)
+- With health checks and retry logic ⭐
+
+**MediatR:**
+- For in-process event handling
+- Clean separation of concerns ⭐
+
+### Production Features
+
+✅ Clean Architecture principles
+✅ CQRS pattern
+✅ Outbox pattern for reliability
+✅ Event-driven architecture
+✅ **Polly for fault tolerance** ⭐
+✅ **Message broker abstraction** ⭐
+✅ **Health checks and graceful startup** ⭐
+✅ **Proper error handling and retry** ⭐
+✅ Horizontal scalability
+✅ Observable with structured logging
+
+**Status**: ✅ **PRODUCTION READY WITH RESILIENCE**
 
 ```bash
 docker-compose up --build
 ```
 
-All services will start and work seamlessly together! 🚀
+All services will:
+- Wait for Kafka to be healthy ✅
+- Start reliably without connection errors ✅
+- Automatically retry on failures ✅
+- Process events via clean MediatR handlers ✅
+- Scale independently ✅
+
+🚀 **Ready for production deployment!**
 

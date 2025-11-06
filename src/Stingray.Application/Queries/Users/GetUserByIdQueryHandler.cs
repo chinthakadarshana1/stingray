@@ -1,9 +1,8 @@
 ﻿using MediatR;
 using Stingray.Application.DTOs;
-using Stingray.Application.Queries;
 using Stingray.Domain.Interfaces;
 
-namespace Stingray.Application.Handlers.Users;
+namespace Stingray.Application.Queries.Users;
 
 public class GetUserByIdQueryHandler(IUserRepository userRepository) : IRequestHandler<GetUserByIdQuery, UserResponse?>
 {

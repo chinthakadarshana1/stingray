@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Stingray.Application.DTOs;
 
-namespace Stingray.Application.Queries;
+namespace Stingray.Application.Queries.Orders;
 
 public class GetOrderByIdQuery : IRequest<OrderResponse?>
 {

@@ -7,13 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MediatR" Version="12.2.0"/>
-        <PackageReference Include="FluentValidation" Version="11.9.0"/>
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0"/>
+        <ProjectReference Include="..\Stingray.Application\Stingray.Application.csproj"/>
+        <ProjectReference Include="..\Stingray.Domain\Stingray.Domain.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Stingray.Domain\Stingray.Domain.csproj"/>
+        <PackageReference Include="Confluent.Kafka" Version="2.12.0"/>
     </ItemGroup>
 
     <ItemGroup>

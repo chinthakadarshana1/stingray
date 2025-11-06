@@ -28,6 +28,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
   stingray.services.userservice:
     image: ${DOCKER_REGISTRY-}stingrayservicesuserservice
@@ -36,13 +42,15 @@ services:
       context: .
       dockerfile: Stingray.Services.UserService/Dockerfile
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy  # Don't start until Kafka is ready!
+    restart: on-failure  # Auto-restart if connection fails
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - Kafka__BootstrapServers=kafka:9092
     ports:
       - "5001:8080"
-
+  
   stingray.services.orderservice:
     image: ${DOCKER_REGISTRY-}stingrayservicesorderservice
     container_name: order_service
@@ -50,7 +58,9 @@ services:
       context: .
       dockerfile: Stingray.Services.OrderService/Dockerfile
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy  # Don't start until Kafka is ready!
+    restart: on-failure  # Auto-restart if connection fails
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - Kafka__BootstrapServers=kafka:9092
@@ -63,11 +73,12 @@ services:
     build:
       context: .
       dockerfile: Stingray.Services.OutboxProcessor/Dockerfile
-    depends_on:
-      - kafka
     environment:
       - DOTNET_ENVIRONMENT=Development
       - Kafka__BootstrapServers=kafka:9092
       - DatabaseName=SharedOutboxDb
+    depends_on:
+      kafka:
+        condition: service_healthy  # Don't start until Kafka is ready!
     restart: unless-stopped
 

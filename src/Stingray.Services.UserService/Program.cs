@@ -2,12 +2,12 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Stingray.Application.Commands;
+using Stingray.Application.Commands.Users;
 using Stingray.Application.DTOs;
 using Stingray.Application.Interfaces;
-using Stingray.Application.Queries;
+using Stingray.Application.Queries.Users;
 using Stingray.Domain.Interfaces;
-using Stingray.Services.UserService.Infrastructure;
+using Stingray.Infrastructure.KafkaMessaging;
 using Stingray.Storage.InMemory;
 using Stingray.Storage.InMemory.Repositories;
 
@@ -37,7 +37,7 @@ var producerConfig = new ProducerConfig
 {
     BootstrapServers = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "kafka:9092"
 };
-builder.Services.AddSingleton<IProducer<string, string>>(sp =>
+builder.Services.AddSingleton<IProducer<string, string>>(_ =>
     new ProducerBuilder<string, string>(producerConfig).Build());
 
 // Add Event Publisher

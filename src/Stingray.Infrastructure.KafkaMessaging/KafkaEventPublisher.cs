@@ -1,10 +1,11 @@
 ﻿using System.Text.Json;
 using Confluent.Kafka;
+using Microsoft.Extensions.Logging;
 using Stingray.Application.Interfaces;
 using Stingray.Domain.Interfaces;
 using Stingray.Domain.Outbox;
 
-namespace Stingray.Services.UserService.Infrastructure;
+namespace Stingray.Infrastructure.KafkaMessaging;
 
 public class KafkaEventPublisher(
     IProducer<string, string> producer,
@@ -12,7 +13,7 @@ public class KafkaEventPublisher(
     ILogger<KafkaEventPublisher> logger)
     : IEventPublisher
 {
-    public async Task PublishAsync<T>(string eventType, T eventData, CancellationToken cancellationToken = default)
+    public async Task PublishAsync<T>(EventType eventType, T eventData, CancellationToken cancellationToken = default)
     {
         var payload = JsonSerializer.Serialize(eventData);
 
@@ -20,7 +21,7 @@ public class KafkaEventPublisher(
         var outboxMessage = new OutboxMessage
         {
             Id = Guid.NewGuid(),
-            EventType = EventType.UserCreated,
+            EventType = eventType,
             Payload = payload,
             CreatedAt = DateTime.UtcNow,
             Status = OutboxMessageStatus.Processing
@@ -37,7 +38,7 @@ public class KafkaEventPublisher(
                 Value = payload
             };
 
-            await producer.ProduceAsync(eventType, message, cancellationToken);
+            await producer.ProduceAsync(eventType.ToString(), message, cancellationToken);
             await outboxRepository.MarkAsProcessedAsync(outboxMessage.Id, cancellationToken);
             logger.LogInformation($"Event {eventType} published successfully");
         }

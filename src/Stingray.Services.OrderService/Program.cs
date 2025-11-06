@@ -2,11 +2,14 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Stingray.Application.Commands;
+using Polly;
+using Polly.Retry;
+using Stingray.Application.Commands.Orders;
 using Stingray.Application.DTOs;
 using Stingray.Application.Interfaces;
-using Stingray.Application.Queries;
+using Stingray.Application.Queries.Orders;
 using Stingray.Domain.Interfaces;
+using Stingray.Infrastructure.KafkaMessaging;
 using Stingray.Services.OrderService.Infrastructure;
 using Stingray.Storage.InMemory;
 using Stingray.Storage.InMemory.Repositories;
@@ -33,15 +36,46 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 
 // Configure Kafka Producer
+builder.Services.AddScoped<IEventPublisher, KafkaEventPublisher>();
+
+// Configure Kafka Producer
 var producerConfig = new ProducerConfig
 {
     BootstrapServers = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "kafka:9092"
 };
-builder.Services.AddSingleton<IProducer<string, string>>(sp =>
+builder.Services.AddSingleton<IProducer<string, string>>(_ =>
     new ProducerBuilder<string, string>(producerConfig).Build());
 
-// Add Event Publisher
-builder.Services.AddScoped<IEventPublisher, KafkaEventPublisher>();
+// Configure Polly Resilience Pipeline for Kafka consumer
+builder.Services.AddSingleton<ResiliencePipeline>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<UserCreatedEventConsumer>>();
+    
+    return new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = new PredicateBuilder().Handle<ConsumeException>(ex =>
+                ex.Error.Code == ErrorCode.UnknownTopicOrPart ||
+                ex.Error.Code == ErrorCode.Local_AllBrokersDown ||
+                ex.Error.Code == ErrorCode.BrokerNotAvailable),
+            MaxRetryAttempts = int.MaxValue, // Retry indefinitely
+            Delay = TimeSpan.FromSeconds(2),
+            BackoffType = DelayBackoffType.Exponential,
+            MaxDelay = TimeSpan.FromSeconds(30),
+            OnRetry = args =>
+            {
+                var ex = args.Outcome.Exception as ConsumeException;
+                logger.LogWarning(
+                    "Kafka error (attempt {AttemptNumber}). Will retry in {RetryDelay}. Error: {ErrorCode} - {ErrorReason}",
+                    args.AttemptNumber,
+                    args.RetryDelay,
+                    ex?.Error.Code,
+                    ex?.Error.Reason);
+                return default;
+            }
+        })
+        .Build();
+});
 
 // Add Background Services
 builder.Services.AddHostedService<UserCreatedEventConsumer>();

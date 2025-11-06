@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Stingray.Application.Commands;
+using Stingray.Application.Commands.Users;
 
 namespace Stingray.Application.Validators;
 

@@ -1,6 +1,8 @@
-﻿namespace Stingray.Application.Interfaces;
+﻿using Stingray.Domain.Outbox;
+
+namespace Stingray.Application.Interfaces;
 
 public interface IEventPublisher
 {
-    Task PublishAsync<T>(string eventType, T eventData, CancellationToken cancellationToken = default);
+    Task PublishAsync<T>(EventType eventType, T eventData, CancellationToken cancellationToken = default);
 }

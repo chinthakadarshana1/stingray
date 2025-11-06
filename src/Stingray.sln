@@ -21,6 +21,10 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Services.OutboxProcessor", "Stingray.Services.OutboxProcessor\Stingray.Services.OutboxProcessor.csproj", "{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{AFEA905B-20E6-40D3-8868-E521AB7EA3EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Infrastructure.KafkaMessaging", "Stingray.Infrastructure.KafkaMessaging\Stingray.Infrastructure.KafkaMessaging.csproj", "{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +59,10 @@ Global
 		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -64,6 +72,7 @@ Global
 		{625AA904-D815-4560-A34E-9811ABD761C7} = {7D1417AB-AA74-44A2-A7A5-C007BB006EB1}
 		{9C2C09A8-12F6-434C-82FA-04309EF0A1EA} = {7D1417AB-AA74-44A2-A7A5-C007BB006EB1}
 		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282} = {7D1417AB-AA74-44A2-A7A5-C007BB006EB1}
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4} = {AFEA905B-20E6-40D3-8868-E521AB7EA3EF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CD8E6E13-C958-4F55-9F68-687C8EAB5EFB}

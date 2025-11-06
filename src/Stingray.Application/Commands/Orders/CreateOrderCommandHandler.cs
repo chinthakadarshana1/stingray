@@ -1,12 +1,12 @@
 ﻿using MediatR;
-using Stingray.Application.Commands;
 using Stingray.Application.DTOs;
 using Stingray.Application.Interfaces;
 using Stingray.Domain;
 using Stingray.Domain.Events;
 using Stingray.Domain.Interfaces;
+using Stingray.Domain.Outbox;
 
-namespace Stingray.Application.Handlers.Orders;
+namespace Stingray.Application.Commands.Orders;
 
 public class CreateOrderCommandHandler(IOrderRepository orderRepository, IEventPublisher eventPublisher)
     : IRequestHandler<CreateOrderCommand, OrderResponse>
@@ -36,7 +36,7 @@ public class CreateOrderCommandHandler(IOrderRepository orderRepository, IEventP
             CreatedAt = createdOrder.CreatedAt
         };
 
-        await eventPublisher.PublishAsync("OrderCreated", orderCreatedEvent, cancellationToken);
+        await eventPublisher.PublishAsync(EventType.OrderCreated, orderCreatedEvent, cancellationToken);
 
         return new OrderResponse
         {

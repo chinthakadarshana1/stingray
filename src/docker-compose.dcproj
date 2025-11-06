@@ -14,7 +14,6 @@
         <None Include=".dockerignore"/>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="README.md"/>
         <Content Include="test-api.sh"/>
     </ItemGroup>
 </Project>

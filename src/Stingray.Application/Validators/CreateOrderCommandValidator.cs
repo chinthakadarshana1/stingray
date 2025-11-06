@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Stingray.Application.Commands;
+using Stingray.Application.Commands.Orders;
 
 namespace Stingray.Application.Validators;
 

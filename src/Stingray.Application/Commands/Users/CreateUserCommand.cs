@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Stingray.Application.DTOs;
 
-namespace Stingray.Application.Commands;
+namespace Stingray.Application.Commands.Users;
 
 public class CreateUserCommand : IRequest<UserResponse>
 {

@@ -1,12 +1,12 @@
 ﻿using MediatR;
-using Stingray.Application.Commands;
 using Stingray.Application.DTOs;
 using Stingray.Application.Interfaces;
 using Stingray.Domain;
 using Stingray.Domain.Events;
 using Stingray.Domain.Interfaces;
+using Stingray.Domain.Outbox;
 
-namespace Stingray.Application.Handlers.Users;
+namespace Stingray.Application.Commands.Users;
 
 public class CreateUserCommandHandler(IUserRepository userRepository, IEventPublisher eventPublisher)
     : IRequestHandler<CreateUserCommand, UserResponse>
@@ -32,7 +32,7 @@ public class CreateUserCommandHandler(IUserRepository userRepository, IEventPubl
             CreatedAt = createdUser.CreatedAt
         };
 
-        await eventPublisher.PublishAsync("UserCreated", userCreatedEvent, cancellationToken);
+        await eventPublisher.PublishAsync(EventType.UserCreated, userCreatedEvent, cancellationToken);
 
         return new UserResponse
         {
