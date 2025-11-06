@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Stingray.Services.UserService": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

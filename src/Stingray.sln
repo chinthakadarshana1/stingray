@@ -1,0 +1,86 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Domain", "Stingray.Domain\Stingray.Domain.csproj", "{3158CD26-D252-40C5-8740-8FFC9CF6135A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Application", "Stingray.Application\Stingray.Application.csproj", "{F7DBA47E-348C-4F4B-BD98-27CF93D547E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Storage", "Storage", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Storage.InMemory", "Stingray.Storage.InMemory\Stingray.Storage.InMemory.csproj", "{6CBA851D-DD89-4779-86E4-C4A915E49BEE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{7D1417AB-AA74-44A2-A7A5-C007BB006EB1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Services.UserService", "Stingray.Services.UserService\Stingray.Services.UserService.csproj", "{625AA904-D815-4560-A34E-9811ABD761C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Services.OrderService", "Stingray.Services.OrderService\Stingray.Services.OrderService.csproj", "{9C2C09A8-12F6-434C-82FA-04309EF0A1EA}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Services.OutboxProcessor", "Stingray.Services.OutboxProcessor\Stingray.Services.OutboxProcessor.csproj", "{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{AFEA905B-20E6-40D3-8868-E521AB7EA3EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Infrastructure.KafkaMessaging", "Stingray.Infrastructure.KafkaMessaging\Stingray.Infrastructure.KafkaMessaging.csproj", "{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stingray.Tests", "Stingray.Tests\Stingray.Tests.csproj", "{9A739224-5A8C-4B75-AB6D-829CDA65536B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3158CD26-D252-40C5-8740-8FFC9CF6135A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3158CD26-D252-40C5-8740-8FFC9CF6135A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3158CD26-D252-40C5-8740-8FFC9CF6135A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3158CD26-D252-40C5-8740-8FFC9CF6135A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7DBA47E-348C-4F4B-BD98-27CF93D547E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7DBA47E-348C-4F4B-BD98-27CF93D547E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7DBA47E-348C-4F4B-BD98-27CF93D547E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7DBA47E-348C-4F4B-BD98-27CF93D547E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CBA851D-DD89-4779-86E4-C4A915E49BEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CBA851D-DD89-4779-86E4-C4A915E49BEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CBA851D-DD89-4779-86E4-C4A915E49BEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CBA851D-DD89-4779-86E4-C4A915E49BEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{625AA904-D815-4560-A34E-9811ABD761C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{625AA904-D815-4560-A34E-9811ABD761C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{625AA904-D815-4560-A34E-9811ABD761C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{625AA904-D815-4560-A34E-9811ABD761C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C2C09A8-12F6-434C-82FA-04309EF0A1EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C2C09A8-12F6-434C-82FA-04309EF0A1EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C2C09A8-12F6-434C-82FA-04309EF0A1EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C2C09A8-12F6-434C-82FA-04309EF0A1EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A739224-5A8C-4B75-AB6D-829CDA65536B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A739224-5A8C-4B75-AB6D-829CDA65536B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A739224-5A8C-4B75-AB6D-829CDA65536B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A739224-5A8C-4B75-AB6D-829CDA65536B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6CBA851D-DD89-4779-86E4-C4A915E49BEE} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{625AA904-D815-4560-A34E-9811ABD761C7} = {7D1417AB-AA74-44A2-A7A5-C007BB006EB1}
+		{9C2C09A8-12F6-434C-82FA-04309EF0A1EA} = {7D1417AB-AA74-44A2-A7A5-C007BB006EB1}
+		{1C7B9C92-DDE4-400A-AD60-1E4D50A4F282} = {7D1417AB-AA74-44A2-A7A5-C007BB006EB1}
+		{94F8E5A2-0E5B-4CC4-AE59-F40BB90991F4} = {AFEA905B-20E6-40D3-8868-E521AB7EA3EF}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CD8E6E13-C958-4F55-9F68-687C8EAB5EFB}
+	EndGlobalSection
+EndGlobal

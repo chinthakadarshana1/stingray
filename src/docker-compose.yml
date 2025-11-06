@@ -1,0 +1,84 @@
+name: stingray
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  stingray.services.userservice:
+    image: ${DOCKER_REGISTRY-}stingrayservicesuserservice
+    container_name: user_service
+    build:
+      context: .
+      dockerfile: Stingray.Services.UserService/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy  # Don't start until Kafka is ready!
+    restart: on-failure  # Auto-restart if connection fails
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Kafka__BootstrapServers=kafka:9092
+    ports:
+      - "5001:8080"
+  
+  stingray.services.orderservice:
+    image: ${DOCKER_REGISTRY-}stingrayservicesorderservice
+    container_name: order_service
+    build:
+      context: .
+      dockerfile: Stingray.Services.OrderService/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy  # Don't start until Kafka is ready!
+    restart: on-failure  # Auto-restart if connection fails
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Kafka__BootstrapServers=kafka:9092
+    ports:
+      - "5002:8080"
+
+  stingray.services.outboxprocessor:
+    image: ${DOCKER_REGISTRY-}stingrayservicesoutboxprocessor
+    container_name: outbox_processor
+    build:
+      context: .
+      dockerfile: Stingray.Services.OutboxProcessor/Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - Kafka__BootstrapServers=kafka:9092
+      - DatabaseName=SharedOutboxDb
+    depends_on:
+      kafka:
+        condition: service_healthy  # Don't start until Kafka is ready!
+    restart: unless-stopped
+

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "stingray.services.orderservice": "StartDebugging",
+        "stingray.services.userservice": "StartDebugging"
+      }
+    }
+  }
+}
