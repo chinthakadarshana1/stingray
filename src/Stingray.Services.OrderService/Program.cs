@@ -1,5 +1,7 @@
 ﻿using Confluent.Kafka;
 using FluentValidation;
+using Hangfire;
+using Hangfire.InMemory;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Polly;
@@ -10,7 +12,7 @@ using Stingray.Application.Interfaces;
 using Stingray.Application.Queries.Orders;
 using Stingray.Domain.Interfaces;
 using Stingray.Infrastructure.KafkaMessaging;
-using Stingray.Services.OrderService.Infrastructure;
+using Stingray.Services.OrderService.Consumers;
 using Stingray.Storage.InMemory;
 using Stingray.Storage.InMemory.Repositories;
 
@@ -49,7 +51,7 @@ builder.Services.AddSingleton<IProducer<string, string>>(_ =>
 // Configure Polly Resilience Pipeline for Kafka consumer
 builder.Services.AddSingleton<ResiliencePipeline>(sp =>
 {
-    var logger = sp.GetRequiredService<ILogger<UserCreatedEventConsumer>>();
+    var logger = sp.GetRequiredService<ILogger<UserCreatedEventConsumerJob>>();
     
     return new ResiliencePipelineBuilder()
         .AddRetry(new RetryStrategyOptions
@@ -77,17 +79,42 @@ builder.Services.AddSingleton<ResiliencePipeline>(sp =>
         .Build();
 });
 
-// Add Background Services
-builder.Services.AddHostedService<UserCreatedEventConsumer>();
+// Configure Hangfire with In-Memory storage (for development)
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseInMemoryStorage());
+
+// Add Hangfire server
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 1; // Number of concurrent workers
+    options.ServerName = "OrderService-Kafka-Consumer";
+    options.Queues = new[] { "kafka-consumers", "default" }; // Process kafka-consumers queue first
+});
+
+// Register the Kafka consumer job
+builder.Services.AddScoped<UserCreatedEventConsumerJob>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-//if (app.Environment.IsDevelopment())
-//{
 app.UseSwagger();
 app.UseSwaggerUI();
-//}
+
+// Configure Hangfire Dashboard - must be before UseRouting if using routing
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    DashboardTitle = "OrderService Jobs"
+    // In production, add authorization: Authorization = new[] { new HangfireAuthorizationFilter() }
+});
+
+// Enqueue indefinite background job to process Kafka messages
+// This will run continuously and retry after 10 seconds on any error
+BackgroundJob.Enqueue<UserCreatedEventConsumerJob>(
+    job => job.ProcessMessagesIndefinitely(CancellationToken.None));
+
 
 // Minimal API endpoints
 app.MapPost("/orders", async (CreateOrderRequest request, IMediator mediator, IValidator<CreateOrderCommand> validator) =>
